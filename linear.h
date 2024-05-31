@@ -3,9 +3,11 @@
 #include <cstdio>
 #include <iostream>
 #include <cmath>
+#include <string>
+#include <format>
 
 #define ALGO 1
-
+static const int size = 9;
 
 class Vector3{
     static const int size = 3;
@@ -81,22 +83,24 @@ public:
         return sqrt(v.getX()*v.getX() + v.getY()*v.getY() + v.getZ()*v.getZ(), 2);
     }
      */
-    double dot(const Vector& v){
+    double dot(const Vector3& v){
         return vector[0]*v.getX() + vector[1]*v.getY() + vector[2]*v.getZ();
     }
-    Vector3 cross(const Vector& v){
-        return Vector(vector[1]*v.getZ() - vector[2]*v.getY(),
+    Vector3 cross(const Vector3& v){
+        return Vector3(vector[1]*v.getZ() - vector[2]*v.getY(),
                       vector[2]*v.getX() - vector[0]*v.getZ(),
                       vector[0]*v.getY() - vector[1]*v.getX());
     }
-    bool operator<(const Vector& v){
-        return magnitude() < ? true : false;
+    /*
+    bool operator<(const Vector3& v) const {
+        return magnitude() < v.magnitude() ? true : false;
     }
+     */
     //FRIEND fucking functions!!!! as in Python or in vex len()
     //it's a stand alone fucntion but it has access to the
     //internals of the objects of the certain class!!
     //I'm smart, I'm smart!
-    friend double length(const Vector& v);
+    friend double length(const Vector3& v);
     ~Vector3() {
         std::cout << "destructing vector" << std::endl;
     }
@@ -110,7 +114,7 @@ double length(const Vector3& v){
 
 //-------MATRIX-------//
 class Matrix3{
-    static const int size {9};
+    static const int size = 9;
     double matrix[size];
 public:
     Matrix3(){
@@ -122,7 +126,7 @@ public:
             }
         }
     }
-    ~Matrix(){
+    ~Matrix3(){
         std::cout << "destructing a matrix" << std::endl;
     }
     Matrix3(float a, float b, float c,
@@ -140,57 +144,71 @@ public:
         matrix[6] = g; matrix[7] = h; matrix[8] = i;
     }
     Matrix3(const Vector3& vec1, const Vector3& vec2, const Vector3& vec3){
-        matrix[0] = vec1[0]; matrix[1] = vec2[0]; matrix[2] = vec3[0];
-        matrix[3] = vec1[1]; matrix[4] = vec2[1]; matrix[5] = vec3[1];
-        matrix[6] = vec1[2]; matrix[7] = vec2[2]; matrix[8] = vec3[2];
+        matrix[0] = vec1.getX(); matrix[1] = vec2.getX(); matrix[2] = vec3.getX();
+        matrix[3] = vec1.getY(); matrix[4] = vec2.getY(); matrix[5] = vec3.getY();
+        matrix[6] = vec1.getZ(); matrix[7] = vec2.getZ(); matrix[8] = vec3.getZ();
         
     }
-    Matrix3(double* matrix, int size) {
-        double local_matrix[size];
+    Matrix3(float* matrix_array) {
         for(int i=0; i<size; i++) {
-            local_matrix[i] =
+            matrix[i] = matrix_array[i];
         }
-        return Matrix3();
+    }
+    Matrix3(double* matrix_array) {
+        for(int i=0; i<size; i++) {
+            matrix[i] = matrix_array[i];
+        }
     }
     //Copy constructor
-    Matrix3(const Matrix& m){
-        for(int i=0; i<sizeof(matrix)/sizeof(*matrix) i++) matrix[i] = m.matrix[i];
+    Matrix3(const Matrix3& m){
+        for(int i=0; i<sizeof(matrix)/sizeof(*matrix); i++) matrix[i] = m.matrix[i];
     }
     Matrix3 rref(){
-        std::cout "perfoming reduced roe echelon form" std::endl;
+        std::cout << "perfoming reduced roe echelon form algorithm" << std::endl;
+        return Matrix3(1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+    }
+    void print(){
+        std::string str = std::format("|{0} {1} {2}|\n|{3} {4} {5}|\n|{6} {7} {8}|\n",
+                                matrix[0], matrix[1], matrix[2],
+                                matrix[3], matrix[4], matrix[5],
+                                matrix[6], matrix[7], matrix[8]);
+        std::cout << str << std::endl;
     }
     //Since matrix scalar multiplication is not cummutative
     //we implement the following function as a friend function
     //so it can have 2 parameters in the oder from math formula
-    friend Matrix3& operator*(float f, const Matrix3& m) const;
-    friend Matrix3& operator*(double d, const Matrix3& m) const;
-    friend Matrix3& operator*(const Vector3& v, const Matrix3& m) const;
-    friend Matrix3& operator*(const Matrix3& lm, const Matrix3& rm) const;
+    friend const Matrix3 operator*(float f, const Matrix3& m);
+    friend const Matrix3 operator*(double d, const Matrix3& m);
+    friend const Vector3 operator*(const Vector3& v, const Matrix3& m);
+    friend const Matrix3 operator*(const Matrix3& lm, const Matrix3& rm);
 };
 
+//------GLOBAL VECTOR FUNCTIONS-------//
 
-Matrix3& operator*(float f, const Matrix3& m) const {
-    //for(int i=0; i<sizeof(m.matrix)/sizeof(*m.matrix); i++) m.matrix[i] *= f;
-    //I suppose we can make the copy of the passed
-    return Matrix3(m.matrix[0] *= f, m.matrix[1] *= f, m.matrix[2] *= f,
-                  m.matrix[3] *= f, m.matrix[4] *= f, m.matrix[5] *= f,
-                  m.matrix[6] *= f, m.matrix[7] *= f, m.matrix[8] *= f);
+const Matrix3 operator*(const float f, const Matrix3& m) {
+    float local_matrix[size] {};
+    for(int i=0; i<sizeof(m.matrix)/sizeof(*m.matrix); i++) {
+        local_matrix[i] = m.matrix[i]*f;
+    }
+    return Matrix3(local_matrix);
 }
-Matrix3& operator*(double d, const Matrix3& m) const {
-    return Matrix3(m.matrix[0] *= d, m.matrix[1] *= d, m.matrix[2] *= d,
-                  m.matrix[3] *= d, m.matrix[4] *= d, m.matrix[5] *= d,
-                  m.matrix[6] *= d, m.matrix[7] *= d, m.matrix[8] *= d);
+const Matrix3 operator*(const double d, const Matrix3& m) {
+    double local_matrix[size] {};
+    for(int i=0; i<sizeof(m.matrix)/sizeof(*m.matrix); i++) {
+        local_matrix[i] = m.matrix[i]*d;
+    }
+    return Matrix3(local_matrix);
 }
-Vector3& operator*(const Vector3& v, const Matrix3& m) const {
+const Vector3 operator*(const Vector3& v, const Matrix3& m) {
     //Since 3d vector has the same number of rows as the the 3x3 Matrix collumns
     //we can perform following operation
-    double x = m.matrix[0]*v.vector[0] + m.matrix[1]*v.vector[1] + m.matrix[2]*v.vector[2];
-    double y = m.matrix[3]*v.vector[0] + m.matrix[4]*v.vector[1] + m.matrix[5]*v.vector[2];
-    double x = m.matrix[6]*v.vector[0] + m.matrix[7]*v.vector[1] + m.matrix[8]*v.vector[2];
+    double x = m.matrix[0]*v.getX() + m.matrix[1]*v.getY() + m.matrix[2]*v.getZ();
+    double y = m.matrix[3]*v.getX() + m.matrix[4]*v.getY() + m.matrix[5]*v.getZ();
+    double z = m.matrix[6]*v.getX() + m.matrix[7]*v.getY() + m.matrix[8]*v.getZ();
     return Vector3(x, y, z);
 }
 #if ALGO == 0
-Matrix3& operator*(const Matrix3& lm, const Matrix3& rm) const {
+const Matrix3 operator*(const Matrix3& lm, const Matrix3& rm) {
     double a = lm.matrix[0]*rm.matrix[0] + lm.matrix[1]*rm.matrix[3] + lm.matrix[2]*rm.matrix[6];
     double b = lm.matrix[0]*rm.matrix[1] + lm.matrix[1]*rm.matrix[4] + lm.matrix[2]*rm.matrix[7];
     double c = lm.matrix[0]*rm.matrix[2] + lm.matrix[1]*rm.matrix[5] + lm.matrix[2]*rm.matrix[8];
@@ -203,26 +221,17 @@ Matrix3& operator*(const Matrix3& lm, const Matrix3& rm) const {
     return Matrix3(a, b, c, d, e, f, g, h, i);
 }
 #elif ALGO == 1
-Matrix3& operator*(const Matrix3& lm, const Matrix3& rm) const {
+
+const Matrix3 operator*(const Matrix3& lm, const Matrix3& rm) {
     double matrix[size] = {};
-    for(int i=0; i<sqrt(sizeof(matrix)/sizeof(*matrix)); i++){
-        matrix[i]   += lm.matrix[j]*rm.matrix[j*3];
-        matrix[i+1] += lm.matrix[i]*rm.matrix[i*3+1];
-        matrix[i+2] += lm.matrix[i]*rm.matrix[i*3+2];
-        matrix[i+3] += lm.matrix[i+]*rm.matrix[i*3];
-        
-    }
-    return Matrix3(a, b, c, d, e, f, g, h, i);
-}
-Matrix3& operator*(const Matrix3& lm, const Matrix3& rm) const {
     for(int i=0; i<sizeof(lm.matrix)/sizeof(*lm.matrix); i++){
         for(int j=0; j<sqrt(sizeof(matrix)/sizeof(*matrix)); j++){
-            matrix[i]   += lm.matrix[i/3*3+j]*rm.matrix[j*3+i%3];
+            matrix[i] += lm.matrix[i/3*3+j]*rm.matrix[j*3+i%3];
         }
-            
-        
     }
-    return Matrix3(a, b, c, d, e, f, g, h, i);
+    return Matrix3(matrix);
 }
+#endif //ALGO
 
+//print()
 #endif// LINEAR_H
